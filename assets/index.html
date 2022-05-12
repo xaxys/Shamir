@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Shamir Demo</title>
+    <script src="http://ajax.aspnetcdn.com/ajax/jQuery/jquery-3.6.0.js"></script>
+</head>
+
+<body>
+    <header>
+        <h1>Hello Shamir!</h1>
+    </header>
+    <div class="generate">
+        <div class="params">
+            t: <input id="t" type="number">
+            n: <input id="n" type="number">
+            <input id="generator" type="submit" value="生成秘密和密钥">
+        </div>
+        <div class="secret-box">
+            <div id="secret"></div>
+            <div id="decrypted_secret"></div>
+            <div id="points"></div>
+        </div>
+    </div>
+    <div class="decrypt">
+        <input id="decryptor" type="submit" value="解密">
+    </div>
+</body>
+
+<script>
+    // 生成秘密和密钥
+    $('#generator').click(function () {
+        let t = document.getElementById('t').value
+        let n = document.getElementById('n').value
+        let data = {
+            t: t,
+            n: n,
+        }
+        $.post('/generate', data, function (result) {
+            console.log(result)
+            $('#secret').html('')
+            $('#decrypted_secret').html('')
+            $('#secret').append('<p>secret: ' + result.secret + '</p>')
+            $('#points').html('')
+            for (let i = 0; i < result.points.length; i++) {
+                $('#points').append('<p class="point"><input type="checkbox"/>' + result.points[i].y + '</p> ')
+            }
+        })
+    })
+
+    // 解密
+    $('#decryptor').click(function () {
+        let selected_points = []
+        $('.point').each(function (index) {
+            if ($(this).children('input[type=checkbox]').prop('checked')) {
+                selected_points.push({
+                    x: index + 1,
+                    y: $(this).html().replace(/<[^>]+>/g, "")
+                })
+            }
+        })
+        let data = {
+            points: selected_points
+        }
+        $.ajax({
+            type: 'post',
+            url: '/decrypt',
+            data: JSON.stringify(data),
+            dataType: 'json',
+            contentType: 'application/json',
+            success: function (result) {
+                $('#decrypted_secret').html('')
+                $('#decrypted_secret').append('<p>decrypted_secret: ' + result.decrypted_secret + '</p> ')
+            }
+        })
+    })
+</script>
+</html>
